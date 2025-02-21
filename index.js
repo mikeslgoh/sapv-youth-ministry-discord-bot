@@ -3,7 +3,6 @@ const axios = require("axios");
 require("dotenv").config();
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
-const express = require("express");
 
 // Initialize the bot client
 const client = new Client({
@@ -45,16 +44,6 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN)
         console.error("❌ Failed to register commands:", error);
     }
 })();
-
-// Set up Express to listen for pings
-const app = express();
-const port = 3000; // Can be any available port
-
-// This endpoint will be hit by UptimeRobot to keep your Repl alive
-app.get("/", (req, res) => {
-    console.log("Received a ping from UptimeRobot!");
-    res.send("Bot is running!");
-});
 
 // Handle interactions
 client.on("interactionCreate", async (interaction) => {
@@ -106,8 +95,3 @@ client.once("ready", () => {
 
 // Log the bot in
 client.login(process.env.DISCORD_BOT_TOKEN);
-
-// Start the Express server to listen for pings from UptimeRobot
-app.listen(port, () => {
-    console.log(`Server is listening on port ${port}`);
-});
