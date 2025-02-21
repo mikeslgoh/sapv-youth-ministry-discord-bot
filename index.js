@@ -60,12 +60,11 @@ client.on("interactionCreate", async (interaction) => {
             const response = await axios.get(`${process.env.WEB_APP_URL}?formName=${encodeURIComponent(formName)}`);
             const data = response.data;
 
-            console.log(data);
-
             if (data.error) {
                 // If an error occurs, reply with the error message
                 await interaction.editReply(`⚠️ Error: ${data.error}`);
             } else if (data.matchingForms && data.matchingForms.length > 0) {
+                console.log("Matching forms found ...")
                 // If matching forms were found, list them
                 let replyMessage = "🔍 Matching forms found:\n";
                 data.matchingForms.forEach((form) => {
@@ -78,12 +77,6 @@ client.on("interactionCreate", async (interaction) => {
             }
         } catch (error) {
             console.error("Error fetching form responses:", error);
-            // Always ensure the bot sends a reply, even in case of an error
-            if (interaction.deferred) {
-                await interaction.editReply("⚠️ Failed to retrieve form responses. Please try again.");
-            } else {
-                await interaction.reply("⚠️ Failed to retrieve form responses. Please try again.");
-            }
         }
     }
 });
