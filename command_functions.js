@@ -8,10 +8,6 @@ class CommandFunctions {
         const formName = interaction.options.getString("formname");
         const responseQuery = interaction.options.getString("responsequery");
 
-		if (responseQuery === null) {
-			return `⚠️ Error: question must be provided to get result for!`;
-		}
-
         try {
 			await interaction.deferReply();
 
