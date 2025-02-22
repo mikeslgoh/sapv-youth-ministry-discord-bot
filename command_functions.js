@@ -16,6 +16,7 @@ class CommandFunctions {
             const queryParams = new URLSearchParams({
                 formName: formName,
                 responseQuery: responseQuery,
+				category: "get_result"
             });
 
             const data = await this.fetchFormData(queryParams);
@@ -48,7 +49,8 @@ class CommandFunctions {
 			await interaction.deferReply();
 
 			const queryParams = new URLSearchParams({
-				formName: formName
+				formName: formName,
+				category: "count"
 			});
 
 			const data = await this.fetchFormData(queryParams);
