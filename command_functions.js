@@ -13,6 +13,8 @@ class CommandFunctions {
 		}
 
         try {
+			await interaction.deferReply();
+
             const queryParams = new URLSearchParams({
                 formName: formName,
                 responseQuery: responseQuery,
@@ -31,13 +33,13 @@ class CommandFunctions {
 				for (const [answer, count] of Object.entries(counts)) {
 					reply += `- **${answer}**: ${count} response(s)\n`;
 				}
-				return reply;
+				await interaction.editReply(reply);
 			} else {
-				return `⚠️ No responses found for the question: "${responseQuery}".`;
+				await interaction.editReply(`⚠️ No responses found for the question: "${responseQuery}".`);
 			}
 		} catch (error) {
 			console.error("❌ Error fetching question results:", error);
-			return "❌ Failed to retrieve question results.";
+			await interaction.editReply("❌ Failed to retrieve question results.");
 		}
     }
 
