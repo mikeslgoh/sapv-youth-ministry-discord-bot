@@ -1,97 +1,108 @@
 const { Client, GatewayIntentBits } = require("discord.js");
-const axios = require("axios");
 require("dotenv").config();
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
+const { CommandFunctions } = require("./command_functions");
 
 // Initialize the bot client
-const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
-    ],
-});
+function initializeClient() {
+    return new Client({
+        intents: [
+            GatewayIntentBits.Guilds,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.MessageContent,
+        ],
+    });
+}
+
+const client = initializeClient();
 
 // Define slash commands
-const commands = [
-    {
-        name: "form",
-        description: "Fetch form response count from Google Apps Script",
-        options: [
-            {
-                type: 3, // STRING type
-                name: "formname",
-                description: "A part of the form name to search for",
-                required: true,
-            },
-        ],
-    },
-];
+function getCommands() {
+    return [
+        {
+            name: "form",
+            description: "Fetch form response count from Google Apps Script",
+            options: [
+                {
+                    type: 3,
+                    name: "category",
+                    description: "Choose what to query",
+                    required: true,
+                    choices: [
+                        { name: "Count", value: "count" },
+                        { name: "Get result for a question", value: "get_result" },
+                    ],
+                },
+                {
+                    type: 3,
+                    name: "formname",
+                    description: "A part of the form name to search for",
+                    required: true,
+                },
+                {
+                    type: 3,
+                    name: "responsequery",
+                    description: "Search for specific responses (e.g., email, name)",
+                    required: false,
+                },
+            ],
+        },
+    ];
+}
 
 // Register slash commands with Discord API
-const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN);
+async function registerCommands() {
+    const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN);
+    const commands = getCommands();
 
-(async () => {
     try {
         console.log("🔄 Registering slash commands...");
-
-        // Register commands for a specific guild
         await rest.put(Routes.applicationCommands(process.env.DISCORD_BOT_CLIENT_ID), { body: commands });
-
         console.log("✅ Slash commands registered!");
     } catch (error) {
         console.error("❌ Failed to register commands:", error);
     }
-})();
+}
 
-// Handle interactions
-client.on("interactionCreate", async (interaction) => {
-    if (!interaction.isCommand()) return; // Only handle commands
+// Handle form command
+async function handleFormCommand(interaction) {
+    const category = interaction.options.getString("category");
 
-    if (interaction.commandName === "form") {
-        const formName = interaction.options.getString("formname");
-
-        try {
-            // Immediately defer the reply to indicate to the user the bot is working
-            await interaction.deferReply();
-
-            // Query the Web App with the partial form name
-            const response = await axios.get(`${process.env.WEB_APP_URL}?formName=${encodeURIComponent(formName)}`);
-            const data = response.data;
-
-            console.log(data);
-
-            if (data.error) {
-                // If an error occurs, reply with the error message
-                await interaction.editReply(`⚠️ Error: ${data.error}`);
-            } else if (data.matchingForms && data.matchingForms.length > 0) {
-                // If matching forms were found, list them
-                let replyMessage = "🔍 Matching forms found:\n";
-                data.matchingForms.forEach((form) => {
-                    replyMessage += `**Form Name**: ${form.name}\n**Responses Count**: ${form.responseCount}\n\n`;
-                });
-                await interaction.editReply(replyMessage);
-            } else {
-                // If no forms were found, let the user know
-                await interaction.editReply(`⚠️ No matching forms found for "${formName}".`);
-            }
-        } catch (error) {
-            console.error("Error fetching form responses:", error);
-            // Always ensure the bot sends a reply, even in case of an error
-            if (interaction.deferred) {
-                await interaction.editReply("⚠️ Failed to retrieve form responses. Please try again.");
-            } else {
-                await interaction.reply("⚠️ Failed to retrieve form responses. Please try again.");
-            }
-        }
+    switch(category) {
+        case "count":
+            await CommandFunctions.getCount(interaction);
+        case "get_result":
+            await CommandFunctions.getResult(interaction);
     }
-});
+}
 
-// Log the bot in
-client.once("ready", () => {
-    console.log(`✅ Logged in as ${client.user.tag}`);
-});
+// Handle interaction events
+function setupInteractionHandler() {
+    client.on("interactionCreate", async (interaction) => {
+        if (!interaction.isCommand()) return;
 
-// Log the bot in
-client.login(process.env.DISCORD_BOT_TOKEN);
+        switch (interaction.commandName) {
+            case "form":
+                await handleFormCommand(interaction);
+                break;
+            default:
+                await interaction.reply("❓ Unknown command.");
+                break;
+        }
+    });
+}
+
+// Start the bot
+async function startBot() {
+    await registerCommands();
+    setupInteractionHandler();
+
+    client.once("ready", () => {
+        console.log(`✅ Logged in as ${client.user.tag}`);
+    });
+
+    client.login(process.env.DISCORD_BOT_TOKEN);
+}
+
+startBot();
