@@ -2,7 +2,8 @@ const { Client, GatewayIntentBits } = require("discord.js");
 require("dotenv").config();
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
-const { CommandFunctions } = require("./command_functions");
+const CommandFunctions = require("./command_functions");
+const commandFunctions = new CommandFunctions(); // Create an instance of CommandFunctions
 
 // Initialize the bot client
 function initializeClient() {
@@ -71,9 +72,9 @@ async function handleFormCommand(interaction) {
 
     switch(category) {
         case "count":
-            await CommandFunctions.getCount(interaction);
+            await commandFunctions.getCount(interaction);
         case "get_result":
-            await CommandFunctions.getResult(interaction);
+            await commandFunctions.getResult(interaction);
     }
 }
 
