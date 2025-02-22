@@ -25,7 +25,7 @@ class CommandFunctions {
 			
 			const counts = data.counts;
 			if (counts && Object.keys(counts).length > 0) {
-				let reply = `📊 **Responses for:** "${responseQuery}"\n\n`;
+				let reply = `📊 **Responses for:** "${responseQuery}"\n`;
 				for (const [answer, count] of Object.entries(counts)) {
 					reply += `- **${answer}**: ${count} response(s)\n`;
 				}
