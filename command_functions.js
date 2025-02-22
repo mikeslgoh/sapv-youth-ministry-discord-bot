@@ -51,12 +51,12 @@ class CommandFunctions {
 				formName: formName
 			});
 
-			const data = await fetchFormData(queryParams);
+			const data = await this.fetchFormData(queryParams);
 
 			if (data.error) {
 				await interaction.editReply(`⚠️ Error: ${data.error}`);
 			} else if (data.matchingForms?.length > 0) {
-				const replyMessage = formatFormResponse(data.matchingForms);
+				const replyMessage = this.formatFormResponse(data.matchingForms);
 				await interaction.editReply(replyMessage);
 			} else {
 				await interaction.editReply(`⚠️ No matching forms found for "${formName}".`);
