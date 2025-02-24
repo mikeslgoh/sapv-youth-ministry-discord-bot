@@ -76,7 +76,7 @@ function getCommands() {
                         option.setName('timezone')
                             .setDescription('The timezone (e.g., America/New_York).')
                             .setRequired(true)
-                            // .setAutocomplete(true)
+                            .setAutocomplete(true)
                     )
                     .addChannelOption(option =>
                         option.setName('channel')
@@ -150,32 +150,47 @@ async function handleschedulerManagerCommand(interaction) {
     }
 }
 
+let lastScheduledMsgAutocompleteTime = 0;
+
 async function handleScheduledMsgAutocomplete(interaction) {
     const focusedValue = interaction.options.getFocused().toLowerCase();
-    const scheduledMessages = schedulerManager.getScheduledMessages();
 
-    // Filter scheduled messages based on user input
-    const choices = scheduledMessages.map((msg) => ({
-        name: `${msg.message.slice(0, 20)} in #${msg.channelId} (${msg.cronTime})`,
-        value: msg.id
-    }));
+    // Debounce requests (at least 500ms apart)
+    const now = Date.now();
+    if (now - lastScheduledMsgAutocompleteTime < 500) return;
+    lastScheduledMsgAutocompleteTime = now;
 
-    const filtered = choices.filter(choice =>
-        choice.name.toLowerCase().includes(focusedValue)
-    );
+    try {
+        const scheduledMessages = schedulerManager.getScheduledMessages();
 
-    await interaction.respond(filtered.slice(0, 25)); // Show up to 25 options
+        // Map the scheduled messages to choices
+        const choices = scheduledMessages.map((msg) => ({
+            name: `${msg.message.slice(0, 20)} in #${msg.channelId} (${msg.cronTime})`,
+            value: msg.id
+        }));
+
+        // Filter choices based on the focused value
+        const filteredChoices = choices.filter(choice =>
+            choice.name.toLowerCase().includes(focusedValue)
+        );
+
+        // Respond with up to 25 filtered results
+        await interaction.respond(filteredChoices.slice(0, 25));
+    } catch (error) {
+        console.error("❌ Autocomplete failed:", error);
+        await interaction.respond([]);
+    }
 }
 
-let lastAutocompleteTime = 0;
+let lastTimezoneAutocompleteTime = 0;
 
 async function handleTimezoneAutocomplete(interaction) {
     const focusedValue = interaction.options.getFocused();
 
     // Debounce requests (at least 500ms apart)
     const now = Date.now();
-    if (now - lastAutocompleteTime < 500) return;
-    lastAutocompleteTime = now;
+    if (now - lastTimezoneAutocompleteTime < 500) return;
+    lastTimezoneAutocompleteTime = now;
 
     try {
         // Filter timezones based on user input, prioritizing common ones

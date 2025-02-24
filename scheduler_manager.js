@@ -85,7 +85,7 @@ class SchedulerManager {
             const targetChannel = await this.client.channels.fetch(channel.id).catch(() => null);
 
             if (!targetChannel) {
-                await interaction.editReply(`Channel not found or bot lacks access: ${channel.id}`);
+                await interaction.editReply(`Channel not found or bot lacks access: ${channel.name}`);
                 return;
             }
 
@@ -99,7 +99,7 @@ class SchedulerManager {
             });
 
             this.saveScheduledMessages();
-            await interaction.editReply(`Message scheduled for ${targetTime.toFormat('yyyy-LL-dd HH:mm')} in channel ${channel.id}.`);
+            await interaction.editReply(`Message scheduled for ${targetTime.toFormat('yyyy-LL-dd HH:mm')} in channel ${channel.name}.`);
         } catch (error) {
             await interaction.editReply(`Error scheduling message: ${error.message}`);
         }
