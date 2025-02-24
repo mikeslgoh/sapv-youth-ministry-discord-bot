@@ -9,7 +9,9 @@ class FormCommandFunctions {
         const responseQuery = interaction.options.getString("responsequery");
 
         try {
-			await interaction.deferReply();
+			if (!interaction.replied && !interaction.deferred) {
+                await interaction.deferReply();
+            }
 
             const queryParams = new URLSearchParams({
                 formName: formName,
@@ -44,7 +46,9 @@ class FormCommandFunctions {
         const formName = interaction.options.getString("formname");
 
 		try {
-			await interaction.deferReply();
+			if (!interaction.replied && !interaction.deferred) {
+                await interaction.deferReply();
+            }
 
 			const queryParams = new URLSearchParams({
 				formName: formName,
