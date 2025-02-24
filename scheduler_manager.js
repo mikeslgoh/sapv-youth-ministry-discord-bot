@@ -38,7 +38,7 @@ class SchedulerManager {
 			const targetChannel = await this.client.channels.fetch(channel.id).catch(() => null);
 
 			if (!targetChannel) {
-				console.error(`Channel not found or bot lacks access: ${channel.id}`);
+				await interaction.editReply(`Channel not found or bot lacks access: ${channel.id}`);
 				return;
 			}
 
@@ -74,15 +74,20 @@ class SchedulerManager {
 		}));
 	}
 
-	cancelScheduledMessage(index) {
-		const job = this.scheduledMessages[index]?.job;
-		if (job) {
-			job.stop();
-			this.scheduledMessages.splice(index, 1);
-			console.log(`Scheduled message ${index} canceled.`);
-			return true;
-		}
-		return false;
+	async cancelScheduledMessage(interaction) {
+		try {
+			const jobId = interaction.options.getString("job_id");
+			const job = this.scheduledMessages[jobId]?.job;
+			if (job) {
+				job.stop();
+				this.scheduledMessages.splice(jobId, 1);
+				await interaction.reply(`✅ Scheduled message canceled.`);
+				return;
+			}
+			await interaction.reply(`❌ Failed to cancel. Message not found.`);
+		} catch (error) {
+            await interaction.editReply(`Error scheduling message: ${error.message}`);
+        }
 	}
 }
 

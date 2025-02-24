@@ -143,14 +143,7 @@ async function handleschedulerManagerCommand(interaction) {
             schedulerManager.schedule(interaction);
             break;
         case "cancel":
-            const jobId = interaction.options.getString("job_id");
-            const success = this.scheduleManager.cancelMessage(jobId);
-
-            if (success) {
-                await interaction.reply(`✅ Scheduled message canceled.`);
-            } else {
-                await interaction.reply(`❌ Failed to cancel. Message not found.`);
-            }
+            schedulerManager.cancelScheduledMessage(interaction);
             break;
         default:
             break;   
@@ -190,6 +183,8 @@ async function handleTimezoneAutocomplete(interaction) {
 function setupInteractionHandler() {
     client.on("interactionCreate", async (interaction) => {
         if (interaction.isAutocomplete()) {
+            console.log('Autocomplete triggered:', interaction.options.getFocused());
+
             const { commandName, options } = interaction;
             if (commandName === "schedule") {
                 const action = options.getString("action");
