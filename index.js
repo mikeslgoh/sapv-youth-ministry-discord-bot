@@ -76,7 +76,7 @@ function getCommands() {
                         option.setName('timezone')
                             .setDescription('The timezone (e.g., America/New_York).')
                             .setRequired(true)
-                            .setAutocomplete(true)
+                            // .setAutocomplete(true)
                     )
                     .addChannelOption(option =>
                         option.setName('channel')
@@ -190,7 +190,7 @@ function setupInteractionHandler() {
                 const action = options.getString("action");
                 switch(action){
                     case "send":
-                        await handleTimezoneAutocomplete(interaction);
+                        // await handleTimezoneAutocomplete(interaction);
                         break;
                     case "cancel":
                         await handleScheduledMsgAutocomplete(interaction);
