@@ -2,6 +2,7 @@ const { Client, GatewayIntentBits, SlashCommandBuilder } = require("discord.js")
 require("dotenv").config();
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
+const moment = require('moment-timezone');
 
 const SchedulerManager = require("./scheduler_manager");
 const GoogleFormManager = require("./google_form_manager");
