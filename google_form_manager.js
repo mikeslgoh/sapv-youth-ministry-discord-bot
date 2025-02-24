@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-class FormCommandFunctions {
+class GoogleFormManager {
     constructor() {}
 
     // Get specific form results
@@ -89,4 +89,4 @@ class FormCommandFunctions {
 }
 
 // Export the entire class
-module.exports = FormCommandFunctions;
+module.exports = GoogleFormManager;

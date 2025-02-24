@@ -3,8 +3,8 @@ require("dotenv").config();
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
 
-const ScheduleMessageCommandFunctions = require("./schedule_command_functions");
-const FormCommandFunctions = require("./form_command_functions");
+const SchedulerManager = require("./scheduler_manager");
+const GoogleFormManager = require("./google_form_manager");
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN);
 
 // Initialize the bot client
@@ -46,27 +46,43 @@ function getCommands() {
             .setName('hello')
             .setDescription('Say hello to our YM Bot!'),
         new SlashCommandBuilder()
-            .setName('schedule_msg')
-            .setDescription('Send a scheduled messaged at a specific time to a specific channel.')
-            .addStringOption(option =>
-                option.setName('message')
-                    .setDescription('The message to send')
-                    .setRequired(true)
+            .setName('schedule')
+            .setDescription('Manage scheduled messages.')
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('send')
+                    .setDescription('Schedule a message to be sent at a specific time.')
+                    .addStringOption(option =>
+                        option.setName('message')
+                            .setDescription('The message to send.')
+                            .setRequired(true)
+                    )
+                    .addStringOption(option =>
+                        option.setName('time')
+                            .setDescription('The time to send the message (HH:mm format).')
+                            .setRequired(true)
+                    )
+                    .addStringOption(option =>
+                        option.setName('timezone')
+                            .setDescription('The timezone (e.g., America/New_York).')
+                            .setRequired(true)
+                    )
+                    .addChannelOption(option =>
+                        option.setName('channel')
+                            .setDescription('The channel to send the message in.')
+                            .setRequired(true)
+                    )
             )
-            .addStringOption(option =>
-                option.setName('time')
-                    .setDescription('The time to send the message (HH:mm format)')
-                    .setRequired(true)
-            )
-            .addStringOption(option =>
-                option.setName('timezone')
-                    .setDescription('The timezone (e.g., America/New_York)')
-                    .setRequired(true)
-            )
-            .addChannelOption(option =>
-                option.setName('channel')
-                    .setDescription('The channel to send the message in')
-                    .setRequired(true)
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('cancel')
+                    .setDescription('Cancel a scheduled message.')
+                    .addStringOption(option =>
+                        option.setName('job_id')
+                            .setDescription('The ID of the scheduled message to cancel.')
+                            .setRequired(true)
+                            .setAutocomplete(true)
+                    )
             )
     ];
 }
@@ -88,13 +104,15 @@ async function registerCommands() {
 // Handle form command
 async function handleFormCommand(interaction) {
     const category = interaction.options.getString("category");
-    const formCommandFunctions = new FormCommandFunctions();
+    const googleFormManager = new GoogleFormManager();
 
     switch(category) {
         case "count":
-            await formCommandFunctions.getCount(interaction);
+            await googleFormManager.getCount(interaction);
+            break;
         case "get_result":
-            await formCommandFunctions.getResult(interaction);
+            await googleFormManager.getResult(interaction);
+            break;
         default:
             break;
     }
@@ -104,29 +122,68 @@ async function handleHelloCommand(interaction) {
     await interaction.reply(`👋 Hello!`);
 }
 
-async function handleScheduleMsgCommand(interaction) {
-    const scheduleMsg = new ScheduleMessageCommandFunctions(client)
-    scheduleMsg.schedule(interaction);
+const schedulerManager = new SchedulerManager(client);
+
+async function handleschedulerManagerCommand(interaction) {
+    const action = interaction.options.getString("action");
+
+    switch(action) {
+        case "send":
+            schedulerManager.schedule(interaction);
+            break;
+        case "cancel":
+            const jobId = interaction.options.getString("job_id");
+            const success = this.scheduleManager.cancelMessage(jobId);
+
+            if (success) {
+                await interaction.reply(`✅ Scheduled message canceled.`);
+            } else {
+                await interaction.reply(`❌ Failed to cancel. Message not found.`);
+            }
+            break;
+        default:
+            break;   
+    }
 }
+
+async function handleScheduledMsgAutocomplete(interaction) {
+    const focusedValue = interaction.options.getFocused().toLowerCase();
+    const scheduledMessages = schedulerManager.getScheduledMessages();
+
+    // Filter scheduled messages based on user input
+    const choices = scheduledMessages.map((msg) => ({
+        name: `${msg.message.slice(0, 20)} in #${msg.channelId} (${msg.cronTime})`,
+        value: msg.id
+    }));
+
+    const filtered = choices.filter(choice =>
+        choice.name.toLowerCase().includes(focusedValue)
+    );
+
+    await interaction.respond(filtered.slice(0, 25)); // Show up to 25 options
+}
+
 
 // Handle interaction events
 function setupInteractionHandler() {
     client.on("interactionCreate", async (interaction) => {
-        if (!interaction.isCommand()) return;
-
-        switch (interaction.commandName) {
-            case "form":
-                await handleFormCommand(interaction);
-                break;
-            case "hello":
-                await handleHelloCommand(interaction);
-                break;
-            case "schedule_msg":
-                await handleScheduleMsgCommand(interaction);
-                break;
-            default:
-                await interaction.reply("❓ Unknown command.");
-                break;
+        if (interaction.isAutocomplete()) {
+            handleScheduledMsgAutocomplete();
+        } else if (interaction.isCommand()) {
+            switch (interaction.commandName) {
+                case "form":
+                    await handleFormCommand(interaction);
+                    break;
+                case "hello":
+                    await handleHelloCommand(interaction);
+                    break;
+                case "schedule":
+                    await handleschedulerManagerCommand(interaction);
+                    break;
+                default:
+                    await interaction.reply("❓ Unknown command.");
+                    break;
+            }
         }
     });
 }

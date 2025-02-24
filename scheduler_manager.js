@@ -1,9 +1,10 @@
 const { DateTime } = require('luxon');
 const cron = require('node-cron');
 
-class ScheduleMessageCommandFunctions {
+class SchedulerManager {
     constructor(client) {
         this.client = client;
+		this.scheduledMessages = []; // Store scheduled messages
     }
 
     async schedule(interaction) {
@@ -34,23 +35,56 @@ class ScheduleMessageCommandFunctions {
 
             const cronTime = `${minute} ${hour} * * *`;
 
-            cron.schedule(cronTime, () => {
-                const targetChannel = this.client.channels.cache.get(channel.id);
-                if (targetChannel) {
-                    targetChannel.send(message);
-                } else {
-                    console.error(`Channel not found: ${channel.id}`);
-                }
-            }, {
-                timezone: timezone
-            });
+			const targetChannel = await this.client.channels.fetch(channel.id).catch(() => null);
 
+			if (!targetChannel) {
+				console.error(`Channel not found or bot lacks access: ${channel.id}`);
+				return;
+			}
+
+			this.scheduledMessages = this.scheduledMessages || [];
+
+			const job = cron.schedule(cronTime, async () => {
+				const targetChannel = await this.client.channels.fetch(channel.id).catch(() => null);
+				if (targetChannel) {
+					const sentMessage = await targetChannel.send(message);
+					await interaction.editReply(`Message sent: ${sentMessage.id}`);
+				}
+			}, { timezone });
+			
+			this.scheduledMessages.push({
+				message,
+				channelId: channel.id,
+				cronTime,
+				job
+			});
+			
             await interaction.editReply(`Message scheduled for ${targetTime.toFormat('yyyy-LL-dd HH:mm')} in channel ${channel.id}.`);
         } catch (error) {
             await interaction.editReply(`Error scheduling message: ${error.message}`);
         }
     }
+
+	getScheduledMessages() {
+		return this.scheduledMessages.map((msg, index) => ({
+			index,
+			message: msg.message,
+			channelId: msg.channelId,
+			cronTime: msg.cronTime
+		}));
+	}
+
+	cancelScheduledMessage(index) {
+		const job = this.scheduledMessages[index]?.job;
+		if (job) {
+			job.stop();
+			this.scheduledMessages.splice(index, 1);
+			console.log(`Scheduled message ${index} canceled.`);
+			return true;
+		}
+		return false;
+	}
 }
 
 
-module.exports = ScheduleMessageCommandFunctions;
+module.exports = SchedulerManager;
