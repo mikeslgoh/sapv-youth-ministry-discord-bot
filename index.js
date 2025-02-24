@@ -62,7 +62,6 @@ function getCommands() {
                 option.setName('timezone')
                     .setDescription('The timezone (e.g., America/New_York)')
                     .setRequired(true)
-                    .setAutocomplete(true)
             )
             .addChannelOption(option =>
                 option.setName('channel')
@@ -84,6 +83,7 @@ async function registerCommands() {
         console.error("❌ Failed to register commands:", error);
     }
 }
+
 
 // Handle form command
 async function handleFormCommand(interaction) {
@@ -112,23 +112,21 @@ async function handleScheduleMsgCommand(interaction) {
 // Handle interaction events
 function setupInteractionHandler() {
     client.on("interactionCreate", async (interaction) => {
-        if (interaction.isAutocomplete()) {
-            await handleAutocomplete(interaction);
-        } else if (interaction.isCommand()) {
-            switch (interaction.commandName) {
-                case "form":
-                    await handleFormCommand(interaction);
-                    break;
-                case "hello":
-                    await handleHelloCommand(interaction);
-                    break;
-                case "schedule_msg":
-                    await handleScheduleMsgCommand(interaction);
-                    break;
-                default:
-                    await interaction.reply("❓ Unknown command.");
-                    break;
-            }
+        if (!interaction.isCommand()) return;
+
+        switch (interaction.commandName) {
+            case "form":
+                await handleFormCommand(interaction);
+                break;
+            case "hello":
+                await handleHelloCommand(interaction);
+                break;
+            case "schedule_msg":
+                await handleScheduleMsgCommand(interaction);
+                break;
+            default:
+                await interaction.reply("❓ Unknown command.");
+                break;
         }
     });
 }
