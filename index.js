@@ -86,6 +86,20 @@ async function registerCommands() {
     }
 }
 
+// Autocomplete function for timezone option
+async function handleAutocomplete(interaction) {
+    if (interaction.commandName === 'schedule_msg') {
+        const focusedOption = interaction.options.getFocused(true);
+        const value = focusedOption.value.toLowerCase();
+
+        const filteredTimezones = availableTimezones.filter(zone => zone.toLowerCase().includes(value));
+
+        await interaction.respond(
+            filteredTimezones.slice(0, 25).map(zone => ({ name: zone, value: zone }))
+        );
+    }
+}
+
 // Handle form command
 async function handleFormCommand(interaction) {
     const category = interaction.options.getString("category");
@@ -113,21 +127,23 @@ async function handleScheduleMsgCommand(interaction) {
 // Handle interaction events
 function setupInteractionHandler() {
     client.on("interactionCreate", async (interaction) => {
-        if (!interaction.isCommand()) return;
-
-        switch (interaction.commandName) {
-            case "form":
-                await handleFormCommand(interaction);
-                break;
-            case "hello":
-                await handleHelloCommand(interaction);
-                break;
-            case "schedule_msg":
-                await handleScheduleMsgCommand(interaction);
-                break;
-            default:
-                await interaction.reply("❓ Unknown command.");
-                break;
+        if (interaction.isAutocomplete()) {
+            await handleAutocomplete(interaction);
+        } else if (interaction.isCommand()) {
+            switch (interaction.commandName) {
+                case "form":
+                    await handleFormCommand(interaction);
+                    break;
+                case "hello":
+                    await handleHelloCommand(interaction);
+                    break;
+                case "schedule_msg":
+                    await handleScheduleMsgCommand(interaction);
+                    break;
+                default:
+                    await interaction.reply("❓ Unknown command.");
+                    break;
+            }
         }
     });
 }

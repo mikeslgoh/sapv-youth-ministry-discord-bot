@@ -49,3 +49,6 @@ class ScheduleMessageCommandFunctions {
         }
     }
 }
+
+
+module.exports = ScheduleMessageCommandFunctions;
