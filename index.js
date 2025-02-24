@@ -150,25 +150,36 @@ async function handleschedulerManagerCommand(interaction) {
     }
 }
 
+let lastScheduledMsgAutocompleteTime = 0;
+let cachedScheduledMessages = [];
+
 async function handleScheduledMsgAutocomplete(interaction) {
     const focusedValue = interaction.options.getFocused().toLowerCase();
 
+    // Debounce requests (500ms)
+    const now = Date.now();
+    if (now - lastScheduledMsgAutocompleteTime < 500) return;
+    lastScheduledMsgAutocompleteTime = now;
+
     try {
-        const scheduledMessages = schedulerManager.getScheduledMessages();
+        // Cache scheduled messages if not already cached or after significant time
+        if (!cachedScheduledMessages.length || now - lastScheduledMsgAutocompleteTime > 60000) {
+            cachedScheduledMessages = schedulerManager.getScheduledMessages().map((msg) => ({
+                id: msg.id,
+                name: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`,
+                lowerName: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`.toLowerCase(),
+                message: msg.message.toLowerCase()  // Store the full message lowercase for comparison
+            }));
+        }
 
-        // Map the scheduled messages to choices
-        const choices = scheduledMessages.map((msg) => ({
-            name: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`,
-            value: msg.id
-        }));
+        // Filter choices where the focusedValue matches any part of the message
+        const filteredChoices = cachedScheduledMessages
+            .filter(choice => choice.message.includes(focusedValue))
+            .slice(0, 25)  // Limit to 25 results
+            .map(choice => ({ name: choice.name, value: choice.id }));
 
-        // Filter choices based on the focused value
-        const filteredChoices = choices.filter(choice =>
-            choice.name.toLowerCase().includes(focusedValue)
-        );
-
-        // Respond with up to 25 filtered results
-        await interaction.respond(filteredChoices.slice(0, 25));
+        // Respond with results
+        await interaction.respond(filteredChoices);
     } catch (error) {
         console.error("❌ Autocomplete failed:", error);
         await interaction.respond([]);
