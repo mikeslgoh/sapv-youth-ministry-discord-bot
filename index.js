@@ -57,7 +57,6 @@ function getCommands() {
                 option.setName('time')
                     .setDescription('The time to send the message (HH:mm format)')
                     .setRequired(true)
-                    .setAutocomplete(true)
             )
             .addStringOption(option =>
                 option.setName('timezone')
