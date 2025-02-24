@@ -140,7 +140,7 @@ async function handleschedulerManagerCommand(interaction) {
 
     switch(action) {
         case "send":
-            schedulerManager.schedule(interaction);
+            schedulerManager.scheduleMessage(interaction);
             break;
         case "cancel":
             schedulerManager.cancelScheduledMessage(interaction);

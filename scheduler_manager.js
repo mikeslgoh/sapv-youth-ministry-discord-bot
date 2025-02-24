@@ -1,18 +1,54 @@
 const { DateTime } = require('luxon');
 const cron = require('node-cron');
+const fs = require('fs');
+const path = require('path');
+
+const DATA_FILE = path.resolve(__dirname, 'scheduledMessages.json');
+
 
 class SchedulerManager {
-    constructor(client) {
+	constructor(client) {
         this.client = client;
-		this.scheduledMessages = []; // Store scheduled messages
+        this.scheduledMessages = this.loadScheduledMessages();
+        this.restoreScheduledJobs();
     }
 
-    async schedule(interaction) {
+    // Load scheduled messages from JSON
+    loadScheduledMessages() {
+        try {
+            if (fs.existsSync(DATA_FILE)) {
+                const data = fs.readFileSync(DATA_FILE, 'utf-8');
+                return JSON.parse(data);
+            }
+        } catch (error) {
+            console.error('Failed to load scheduled messages:', error);
+        }
+        return [];
+    }
+
+    // Save scheduled messages to JSON
+    saveScheduledMessages() {
+        try {
+            fs.writeFileSync(DATA_FILE, JSON.stringify(this.scheduledMessages, null, 4));
+        } catch (error) {
+            console.error('Failed to save scheduled messages:', error);
+        }
+    }
+
+    // Restore scheduled jobs on bot restart
+    restoreScheduledJobs() {
+        this.scheduledMessages.forEach((msg) => {
+            this.scheduleMessage(msg);
+        });
+    }
+
+    async scheduleMessage(interaction) {
 		const message = interaction.options.getString("message");
 		const time = interaction.options.getString("time");
 		const timezone = interaction.options.getString("timezone");
 		const channel = interaction.options.getChannel("channel");
 
+		console.log("Start scheduling message ...")
         try {
             const [hour, minute] = time.split(':').map(Number);
             const now = DateTime.now().setZone(timezone);
@@ -45,6 +81,7 @@ class SchedulerManager {
 			this.scheduledMessages = this.scheduledMessages || [];
 
 			const job = cron.schedule(cronTime, async () => {
+				console.log("Scheduling message ...")
 				const targetChannel = await this.client.channels.fetch(channel.id).catch(() => null);
 				if (targetChannel) {
 					const sentMessage = await targetChannel.send(message);
