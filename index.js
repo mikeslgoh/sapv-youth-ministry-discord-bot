@@ -114,10 +114,10 @@ async function registerCommands() {
 
 // Handle form command
 async function handleFormCommand(interaction) {
-    const category = interaction.options.getString("category");
+    const subcommand = interaction.options.getSubcommand();
     const googleFormManager = new GoogleFormManager();
 
-    switch(category) {
+    switch(subcommand) {
         case "count":
             await googleFormManager.getCount(interaction);
             break;
@@ -136,9 +136,9 @@ async function handleHelloCommand(interaction) {
 const schedulerManager = new SchedulerManager(client);
 
 async function handleschedulerManagerCommand(interaction) {
-    const action = interaction.options.getString("action");
+    const subcommand = interaction.options.getSubcommand();
 
-    switch(action) {
+    switch(subcommand) {
         case "send":
             schedulerManager.scheduleMessage(interaction);
             break;
@@ -167,16 +167,48 @@ async function handleScheduledMsgAutocomplete(interaction) {
     await interaction.respond(filtered.slice(0, 25)); // Show up to 25 options
 }
 
+let lastAutocompleteTime = 0;
+
 async function handleTimezoneAutocomplete(interaction) {
-    const focusedValue = options.getFocused();
+    const focusedValue = interaction.options.getFocused();
 
-    // Filter timezones based on user input
-    const choices = moment.tz.names()
-        .filter((tz) => tz.toLowerCase().includes(focusedValue.toLowerCase()))
-        .slice(0, 25) // Discord limits autocomplete to 25 results
-        .map((tz) => ({ name: tz, value: tz }));
+    // Debounce requests (at least 500ms apart)
+    const now = Date.now();
+    if (now - lastAutocompleteTime < 500) return;
+    lastAutocompleteTime = now;
 
-    await interaction.respond(choices);
+    try {
+        // Filter timezones based on user input, prioritizing common ones
+        const commonTimezones = [
+            'America/Vancouver', 'America/Los_Angeles', 'Europe/London',
+            'Asia/Singapore', 'Asia/Tokyo', 'UTC'
+        ];
+
+        let choices = moment.tz.names();
+
+        // Show common timezones first if they match the input
+        const prioritizedChoices = commonTimezones.filter(tz =>
+            tz.toLowerCase().includes(focusedValue.toLowerCase())
+        );
+
+        const filteredChoices = choices.filter(tz =>
+            tz.toLowerCase().includes(focusedValue.toLowerCase())
+        );
+
+        // Combine prioritized and regular choices, remove duplicates
+        const uniqueChoices = Array.from(new Set([...prioritizedChoices, ...filteredChoices]));
+
+        // Send up to 25 results
+        const results = uniqueChoices.slice(0, 25).map((tz) => ({
+            name: tz,
+            value: tz
+        }));
+
+        await interaction.respond(results);
+    } catch (error) {
+        console.error("❌ Autocomplete failed:", error);
+        await interaction.respond([]);
+    }
 }
 
 // Handle interaction events
@@ -190,7 +222,7 @@ function setupInteractionHandler() {
                 const action = options.getString("action");
                 switch(action){
                     case "send":
-                        // await handleTimezoneAutocomplete(interaction);
+                        await handleTimezoneAutocomplete(interaction);
                         break;
                     case "cancel":
                         await handleScheduledMsgAutocomplete(interaction);
