@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-class CommandFunctions {
+class FormCommandFunctions {
     constructor() {}
 
     // Get specific form results
@@ -85,4 +85,4 @@ class CommandFunctions {
 }
 
 // Export the entire class
-module.exports = CommandFunctions;
+module.exports = FormCommandFunctions;

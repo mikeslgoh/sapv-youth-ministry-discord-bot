@@ -2,8 +2,9 @@ const { Client, GatewayIntentBits } = require("discord.js");
 require("dotenv").config();
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
-const CommandFunctions = require("./command_functions");
-const commandFunctions = new CommandFunctions(); // Create an instance of CommandFunctions
+const FormCommandFunctions = require("./form_command_functions");
+const formCommandFunctions = new FormCommandFunctions(); // Create an instance of CommandFunctions
+const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN);
 
 // Initialize the bot client
 function initializeClient() {
@@ -49,12 +50,15 @@ function getCommands() {
                 },
             ],
         },
+        {
+            name: "hello",
+            description: "Say hello to our YM Bot!"
+        },
     ];
 }
 
 // Register slash commands with Discord API
 async function registerCommands() {
-    const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN);
     const commands = getCommands();
 
     try {
@@ -72,10 +76,16 @@ async function handleFormCommand(interaction) {
 
     switch(category) {
         case "count":
-            await commandFunctions.getCount(interaction);
+            await formCommandFunctions.getCount(interaction);
         case "get_result":
-            await commandFunctions.getResult(interaction);
+            await formCommandFunctions.getResult(interaction);
+        default:
+            break;
     }
+}
+
+async function handleHelloCommand(interaction) {
+    await interaction.reply(`👋 Hello!`);
 }
 
 // Handle interaction events
@@ -86,6 +96,9 @@ function setupInteractionHandler() {
         switch (interaction.commandName) {
             case "form":
                 await handleFormCommand(interaction);
+                break;
+            case "hello":
+                await handleHelloCommand(interaction);
                 break;
             default:
                 await interaction.reply("❓ Unknown command.");
