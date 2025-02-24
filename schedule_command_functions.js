@@ -10,7 +10,7 @@ class ScheduleMessageCommandFunctions {
 		const message = interaction.options.getString("message");
 		const time = interaction.options.getString("time");
 		const timezone = interaction.options.getString("timezone");
-		const channel = interaction.options.getString("channel");
+		const channelId = interaction.options.getString("channel");
 
         try {
             const [hour, minute] = time.split(':').map(Number);
