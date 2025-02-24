@@ -150,22 +150,15 @@ async function handleschedulerManagerCommand(interaction) {
     }
 }
 
-let lastScheduledMsgAutocompleteTime = 0;
-
 async function handleScheduledMsgAutocomplete(interaction) {
     const focusedValue = interaction.options.getFocused().toLowerCase();
-
-    // Debounce requests (at least 500ms apart)
-    const now = Date.now();
-    if (now - lastScheduledMsgAutocompleteTime < 500) return;
-    lastScheduledMsgAutocompleteTime = now;
 
     try {
         const scheduledMessages = schedulerManager.getScheduledMessages();
 
         // Map the scheduled messages to choices
         const choices = scheduledMessages.map((msg) => ({
-            name: `${msg.message.slice(0, 20)} in #${msg.channelId} (${msg.cronTime})`,
+            name: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`,
             value: msg.id
         }));
 
@@ -184,42 +177,41 @@ async function handleScheduledMsgAutocomplete(interaction) {
 
 let lastTimezoneAutocompleteTime = 0;
 
-async function handleTimezoneAutocomplete(interaction) {
-    const focusedValue = interaction.options.getFocused();
+const timezoneNames = moment.tz.names();
+const commonTimezones = [
+    'America/Vancouver', 'America/Los_Angeles', 'Europe/London',
+    'Asia/Singapore', 'Asia/Tokyo', 'UTC'
+];
 
-    // Debounce requests (at least 500ms apart)
+// Preprocess timezone names to lowercase for faster filtering
+const lowercasedTimezones = timezoneNames.map(tz => ({ name: tz, lower: tz.toLowerCase() }));
+const lowercasedCommon = commonTimezones.map(tz => ({ name: tz, lower: tz.toLowerCase() }));
+
+async function handleTimezoneAutocomplete(interaction) {
+    const focusedValue = interaction.options.getFocused().toLowerCase();
+
+    // Debounce requests (500ms)
     const now = Date.now();
     if (now - lastTimezoneAutocompleteTime < 500) return;
     lastTimezoneAutocompleteTime = now;
 
     try {
-        // Filter timezones based on user input, prioritizing common ones
-        const commonTimezones = [
-            'America/Vancouver', 'America/Los_Angeles', 'Europe/London',
-            'Asia/Singapore', 'Asia/Tokyo', 'UTC'
-        ];
+        // Filter common timezones first
+        const prioritizedChoices = lowercasedCommon
+            .filter(tz => tz.lower.includes(focusedValue))
+            .map(tz => ({ name: tz.name, value: tz.name }));
 
-        let choices = moment.tz.names();
+        // Filter all timezones
+        const filteredChoices = lowercasedTimezones
+            .filter(tz => tz.lower.includes(focusedValue))
+            .map(tz => ({ name: tz.name, value: tz.name }));
 
-        // Show common timezones first if they match the input
-        const prioritizedChoices = commonTimezones.filter(tz =>
-            tz.toLowerCase().includes(focusedValue.toLowerCase())
-        );
+        // Combine, remove duplicates, and limit to 25
+        const uniqueChoices = Array.from(new Set([...prioritizedChoices, ...filteredChoices].map(c => c.name)))
+            .slice(0, 25)
+            .map(name => ({ name, value: name }));
 
-        const filteredChoices = choices.filter(tz =>
-            tz.toLowerCase().includes(focusedValue.toLowerCase())
-        );
-
-        // Combine prioritized and regular choices, remove duplicates
-        const uniqueChoices = Array.from(new Set([...prioritizedChoices, ...filteredChoices]));
-
-        // Send up to 25 results
-        const results = uniqueChoices.slice(0, 25).map((tz) => ({
-            name: tz,
-            value: tz
-        }));
-
-        await interaction.respond(results);
+        await interaction.respond(uniqueChoices);
     } catch (error) {
         console.error("❌ Autocomplete failed:", error);
         await interaction.respond([]);

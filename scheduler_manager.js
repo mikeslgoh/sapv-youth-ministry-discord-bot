@@ -94,6 +94,7 @@ class SchedulerManager {
             this.scheduledMessages.push({
                 message,
                 channelId: channel.id,
+                channelName: channel.name,
                 cronTime,
                 timezone
             });
@@ -108,7 +109,6 @@ class SchedulerManager {
     // Schedule the cron job
     scheduleCronJob(msg, interaction = null) {
         const job = cron.schedule(msg.cronTime, async () => {
-            console.log("Sending scheduled message...");
             const targetChannel = await this.client.channels.fetch(msg.channelId).catch(() => null);
 
             if (targetChannel) {
