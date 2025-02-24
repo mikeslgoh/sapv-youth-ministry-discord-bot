@@ -75,6 +75,7 @@ function getCommands() {
                         option.setName('timezone')
                             .setDescription('The timezone (e.g., America/New_York).')
                             .setRequired(true)
+                            .setAutocomplete(true)
                     )
                     .addChannelOption(option =>
                         option.setName('channel')
@@ -172,13 +173,35 @@ async function handleScheduledMsgAutocomplete(interaction) {
     await interaction.respond(filtered.slice(0, 25)); // Show up to 25 options
 }
 
+async function handleTimezoneAutocomplete(interaction) {
+    const focusedValue = options.getFocused();
+
+    // Filter timezones based on user input
+    const choices = moment.tz.names()
+        .filter((tz) => tz.toLowerCase().includes(focusedValue.toLowerCase()))
+        .slice(0, 25) // Discord limits autocomplete to 25 results
+        .map((tz) => ({ name: tz, value: tz }));
+
+    await interaction.respond(choices);
+}
 
 // Handle interaction events
 function setupInteractionHandler() {
     client.on("interactionCreate", async (interaction) => {
         if (interaction.isAutocomplete()) {
-            if (interaction.commandName === 'schedule') {
-                handleScheduledMsgAutocomplete();
+            const { commandName, options } = interaction;
+            if (commandName === "schedule") {
+                const action = options.getString("action");
+                switch(action){
+                    case "send":
+                        await handleTimezoneAutocomplete(interaction);
+                        break;
+                    case "cancel":
+                        await handleScheduledMsgAutocomplete(interaction);
+                        break;
+                    default:
+                        break;
+                }
             }
         } else if (interaction.isCommand()) {
             switch (interaction.commandName) {
