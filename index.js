@@ -2,8 +2,6 @@ const { Client, GatewayIntentBits, SlashCommandBuilder } = require("discord.js")
 require("dotenv").config();
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
-const { Info } = require('luxon');
-
 
 const ScheduleMessageCommandFunctions = require("./schedule_command_functions");
 const FormCommandFunctions = require("./form_command_functions");
@@ -59,12 +57,13 @@ function getCommands() {
                 option.setName('time')
                     .setDescription('The time to send the message (HH:mm format)')
                     .setRequired(true)
+                    .setAutocomplete(true)
             )
             .addStringOption(option =>
                 option.setName('timezone')
                     .setDescription('The timezone (e.g., America/New_York)')
                     .setRequired(true)
-                    .addChoices(Info.availableZones())
+                    .setAutocomplete(true)
             )
             .addChannelOption(option =>
                 option.setName('channel')
