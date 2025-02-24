@@ -25,23 +25,32 @@ function getCommands() {
     return [
         new SlashCommandBuilder()
             .setName('form')
-            .setDescription('Fetch form response count from Google Apps Script')
-            .addStringOption(option =>
-                option.setName('category')
-                    .setDescription('Choose what to query')
-                    .setRequired(true)
-                    .addChoices(
-                        { name: 'Count', value: 'count' },
-                        { name: 'Get result for a question', value: 'get_result' }
-                    ))
-            .addStringOption(option =>
-                option.setName('formname')
-                    .setDescription('A part of the form name to search for')
-                    .setRequired(true))
-            .addStringOption(option =>
-                option.setName('responsequery')
-                    .setDescription('Search for specific responses (e.g., email, name)')
-                    .setRequired(false)),
+            .setDescription('Fetch form response data from Google Apps Script.')
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('count')
+                    .setDescription('Get the total count of form responses.')
+                    .addStringOption(option =>
+                        option.setName('formname')
+                            .setDescription('A part of the form name to search for.')
+                            .setRequired(true)
+                    )
+            )
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('get_result')
+                    .setDescription('Get responses for a specific question.')
+                    .addStringOption(option =>
+                        option.setName('formname')
+                            .setDescription('A part of the form name to search for.')
+                            .setRequired(true)
+                    )
+                    .addStringOption(option =>
+                        option.setName('responsequery')
+                            .setDescription('Search for specific responses (e.g., email, name).')
+                            .setRequired(true)
+                    )
+            ),
         new SlashCommandBuilder()
             .setName('hello')
             .setDescription('Say hello to our YM Bot!'),
@@ -168,7 +177,9 @@ async function handleScheduledMsgAutocomplete(interaction) {
 function setupInteractionHandler() {
     client.on("interactionCreate", async (interaction) => {
         if (interaction.isAutocomplete()) {
-            handleScheduledMsgAutocomplete();
+            if (interaction.commandName === 'schedule') {
+                handleScheduledMsgAutocomplete();
+            }
         } else if (interaction.isCommand()) {
             switch (interaction.commandName) {
                 case "form":
