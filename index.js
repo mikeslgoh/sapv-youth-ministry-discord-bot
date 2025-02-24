@@ -234,7 +234,7 @@ function setupInteractionHandler() {
 
             const { commandName, options } = interaction;
             if (commandName === "schedule") {
-                const action = options.getString("action");
+                const action = options.getSubcommand();
                 switch(action){
                     case "send":
                         await handleTimezoneAutocomplete(interaction);
