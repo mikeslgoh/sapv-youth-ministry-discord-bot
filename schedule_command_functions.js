@@ -21,10 +21,14 @@ class ScheduleMessageCommandFunctions {
                 return;
             }
 
+			if (!interaction.replied && !interaction.deferred) {
+                await interaction.deferReply();
+            }
+
             const targetTime = now.set({ hour, minute, second: 0 });
 
             if (targetTime <= now) {
-                await interaction.reply('The scheduled time must be in the future.');
+                await interaction.editReply('The scheduled time must be in the future.');
                 return;
             }
 
@@ -39,9 +43,9 @@ class ScheduleMessageCommandFunctions {
                 timezone: timezone
             });
 
-            await interaction.reply(`Message scheduled for ${targetTime.toFormat('yyyy-LL-dd HH:mm')} in channel ${channelId}.`);
+            await interaction.editReply(`Message scheduled for ${targetTime.toFormat('yyyy-LL-dd HH:mm')} in channel ${channelId}.`);
         } catch (error) {
-            await interaction.reply('Error scheduling message:', error);
+            await interaction.editReply('Error scheduling message:', error);
         }
     }
 }
