@@ -1,5 +1,4 @@
 const { Client, GatewayIntentBits, SlashCommandBuilder } = require("discord.js");
-const axios = require('axios');
 require("dotenv").config();
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
@@ -166,10 +165,10 @@ async function handleScheduledMsgAutocomplete(interaction) {
         // Cache scheduled messages if not already cached or after significant time
         if (!cachedScheduledMessages.length || now - lastScheduledMsgAutocompleteTime > 60000) {
             cachedScheduledMessages = schedulerManager.getScheduledMessages().map((msg) => ({
-                id: msg.id,
+                id: String(msg.id),  // Ensure ID is a string
                 name: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`,
                 lowerName: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`.toLowerCase(),
-                message: msg.message.toLowerCase()  // Store the full message lowercase for comparison
+                message: msg.message.toLowerCase()
             }));
         }
 
@@ -177,7 +176,7 @@ async function handleScheduledMsgAutocomplete(interaction) {
         const filteredChoices = cachedScheduledMessages
             .filter(choice => choice.message.includes(focusedValue))
             .slice(0, 25)  // Limit to 25 results
-            .map(choice => ({ name: choice.name, value: choice.id }));
+            .map(choice => ({ name: choice.name, value: choice.id }));  // Ensure value is string
 
         // Respond with results
         await interaction.respond(filteredChoices);
