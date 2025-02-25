@@ -169,7 +169,7 @@ async function handleScheduledMsgAutocomplete(interaction) {
         if (!cachedScheduledMessages.length || now - lastCacheUpdateTime > 60000) {
             console.log("🔄 Updating cache for scheduled messages...");
             cachedScheduledMessages = schedulerManager.getScheduledMessages().map((msg) => ({
-                id: String(msg.id),  // Ensure ID is a string
+                id: msg.id,  // Ensure ID is a string
                 name: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`,
                 lowerName: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`.toLowerCase(),
                 message: msg.message.toLowerCase()

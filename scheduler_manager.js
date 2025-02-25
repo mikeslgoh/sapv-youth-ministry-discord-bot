@@ -129,14 +129,14 @@ class SchedulerManager {
     }
 
     getScheduledMessages() {
-        return this.scheduledMessages.map((msg, index) => ({
-            index,
+        return Object.entries(this.scheduledMessages).map(([key, msg]) => ({
+            id: key,  // Use the key as the ID
             message: msg.message,
             channelId: msg.channelId,
             cronTime: msg.cronTime
         }));
     }
-
+    
     async cancelScheduledMessage(interaction) {
         try {
             const messageContent = interaction.options.getString("message");
