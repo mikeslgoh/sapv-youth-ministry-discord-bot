@@ -143,7 +143,7 @@ class SchedulerManager {
     
             // Find the matching message by content
             const matchingKey = Object.keys(this.scheduledMessages).find((key) =>
-                this.scheduledMessages[key].message.toLowerCase() === messageContent.toLowerCase()
+                this.scheduledMessages[key].message.toLowerCase().includes(messageContent.toLowerCase())
             );
     
             if (matchingKey) {
