@@ -151,6 +151,7 @@ async function handleschedulerManagerCommand(interaction) {
 }
 
 let lastScheduledMsgAutocompleteTime = 0;
+let lastCacheUpdateTime = 0;
 let cachedScheduledMessages = [];
 
 async function handleScheduledMsgAutocomplete(interaction) {
@@ -161,28 +162,39 @@ async function handleScheduledMsgAutocomplete(interaction) {
     if (now - lastScheduledMsgAutocompleteTime < 500) return;
     lastScheduledMsgAutocompleteTime = now;
 
+    let responded = false;
+
     try {
-        // Cache scheduled messages if not already cached or after significant time
-        if (!cachedScheduledMessages.length || now - lastScheduledMsgAutocompleteTime > 60000) {
+        // Refresh cache every 60 seconds
+        if (!cachedScheduledMessages.length || now - lastCacheUpdateTime > 60000) {
+            console.log("🔄 Updating cache for scheduled messages...");
             cachedScheduledMessages = schedulerManager.getScheduledMessages().map((msg) => ({
                 id: String(msg.id),  // Ensure ID is a string
                 name: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`,
                 lowerName: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`.toLowerCase(),
                 message: msg.message.toLowerCase()
             }));
+            lastCacheUpdateTime = now;  // Update cache time
         }
 
-        // Filter choices where the focusedValue matches any part of the message
+        // Filter choices
         const filteredChoices = cachedScheduledMessages
             .filter(choice => choice.message.includes(focusedValue))
-            .slice(0, 25)  // Limit to 25 results
-            .map(choice => ({ name: choice.name, value: choice.id }));  // Ensure value is string
+            .slice(0, 25)
+            .map(choice => ({ name: choice.name, value: choice.id }));
 
-        // Respond with results
-        await interaction.respond(filteredChoices);
+        // Ensure single response
+        if (!responded) {
+            await interaction.respond(filteredChoices);
+            responded = true;
+            console.log("✅ Autocomplete response sent.");
+        }
     } catch (error) {
         console.error("❌ Autocomplete failed:", error);
-        await interaction.respond([]);
+        if (!responded) {
+            await interaction.respond([]);  // Send empty choices if error
+            responded = true;
+        }
     }
 }
 
