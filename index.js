@@ -287,7 +287,7 @@ async function startBot() {
         console.log(`✅ Logged in as ${client.user.tag}`);
     });
 
-    const PING_INTERVAL = 5 * 60 * 1000; // Every 5 minutes
+    const PING_INTERVAL = 14 * 60 * 1000; // Every 14 minutes
 
     setInterval(async () => {
         try {

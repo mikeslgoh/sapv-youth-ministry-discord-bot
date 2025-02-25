@@ -130,44 +130,29 @@ class SchedulerManager {
 
     getScheduledMessages() {
         return Object.entries(this.scheduledMessages).map(([key, msg]) => ({
-            id: key,  // Use the key as the ID
+            id: key,
             message: msg.message,
             channelId: msg.channelId,
             cronTime: msg.cronTime
         }));
-    }
-    
+    }    
+
     async cancelScheduledMessage(interaction) {
         try {
-            const messageContent = interaction.options.getString("message");
-    
-            // Find the matching message by content
-            const matchingKey = Object.keys(this.scheduledMessages).find((key) =>
-                this.scheduledMessages[key].message.toLowerCase().includes(messageContent.toLowerCase())
-            );
-    
-            if (matchingKey) {
-                const jobData = this.scheduledMessages[matchingKey];
-    
-                // Stop the job
-                jobData.job.stop();
-    
-                // Remove from the scheduledMessages object
-                delete this.scheduledMessages[matchingKey];
-    
-                // Update the JSON file
+            const jobId = interaction.options.getString("message");
+            const job = this.scheduledMessages[jobId]?.job;
+            if (job) {
+                job.stop();
+                this.scheduledMessages.splice(jobId, 1);
                 this.saveScheduledMessages();
-    
-                await interaction.reply(`✅ Scheduled message with content "${messageContent}" canceled.`);
+                await interaction.reply(`✅ Scheduled message canceled.`);
                 return;
             }
-    
-            await interaction.reply(`❌ No scheduled message found with content "${messageContent}".`);
+            await interaction.reply(`❌ Failed to cancel. Message not found.`);
         } catch (error) {
-            console.error("❌ Error canceling message:", error);
-            await interaction.reply(`❌ Error canceling message: ${error.message}`);
+            await interaction.editReply(`Error canceling message: ${error.message}`);
         }
-    }    
+    }
 }
 
 module.exports = SchedulerManager;
