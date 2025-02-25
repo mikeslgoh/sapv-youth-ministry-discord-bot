@@ -139,20 +139,35 @@ class SchedulerManager {
 
     async cancelScheduledMessage(interaction) {
         try {
-            const jobId = interaction.options.getString("job_id");
-            const job = this.scheduledMessages[jobId]?.job;
-            if (job) {
-                job.stop();
-                this.scheduledMessages.splice(jobId, 1);
+            const messageContent = interaction.options.getString("message");
+    
+            // Find the matching message by content
+            const matchingKey = Object.keys(this.scheduledMessages).find((key) =>
+                this.scheduledMessages[key].message.toLowerCase() === messageContent.toLowerCase()
+            );
+    
+            if (matchingKey) {
+                const jobData = this.scheduledMessages[matchingKey];
+    
+                // Stop the job
+                jobData.job.stop();
+    
+                // Remove from the scheduledMessages object
+                delete this.scheduledMessages[matchingKey];
+    
+                // Update the JSON file
                 this.saveScheduledMessages();
-                await interaction.reply(`✅ Scheduled message canceled.`);
+    
+                await interaction.reply(`✅ Scheduled message with content "${messageContent}" canceled.`);
                 return;
             }
-            await interaction.reply(`❌ Failed to cancel. Message not found.`);
+    
+            await interaction.reply(`❌ No scheduled message found with content "${messageContent}".`);
         } catch (error) {
-            await interaction.editReply(`Error canceling message: ${error.message}`);
+            console.error("❌ Error canceling message:", error);
+            await interaction.reply(`❌ Error canceling message: ${error.message}`);
         }
-    }
+    }    
 }
 
 module.exports = SchedulerManager;

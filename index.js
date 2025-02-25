@@ -89,8 +89,8 @@ function getCommands() {
                     .setName('cancel')
                     .setDescription('Cancel a scheduled message.')
                     .addStringOption(option =>
-                        option.setName('job_id')
-                            .setDescription('The ID of the scheduled message to cancel.')
+                        option.setName('message')
+                            .setDescription('The message that was scheduled to be cancelled.')
                             .setRequired(true)
                             .setAutocomplete(true)
                     )
@@ -245,8 +245,6 @@ async function handleTimezoneAutocomplete(interaction) {
 function setupInteractionHandler() {
     client.on("interactionCreate", async (interaction) => {
         if (interaction.isAutocomplete()) {
-            console.log('Autocomplete triggered:', interaction.options.getFocused());
-
             const { commandName, options } = interaction;
             if (commandName === "schedule") {
                 const action = options.getSubcommand();
