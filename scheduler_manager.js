@@ -133,6 +133,7 @@ class SchedulerManager {
             id: key,
             message: msg.message,
             channelId: msg.channelId,
+            channelName: msg.channelName,
             cronTime: msg.cronTime
         }));
     }    
