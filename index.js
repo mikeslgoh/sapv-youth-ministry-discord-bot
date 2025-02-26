@@ -160,34 +160,33 @@ async function handleScheduledMsgAutocomplete(interaction) {
     if (now - lastScheduledMsgAutocompleteTime < 500) return;
     lastScheduledMsgAutocompleteTime = now;
 
-    let responded = false;
-
     try {
-        // Get fresh scheduled messages every time
         const scheduledMessages = schedulerManager.getScheduledMessages();
 
         // Filter choices
         const filteredChoices = scheduledMessages
             .map((msg) => ({
-                id: String(msg.id),  // Ensure ID is a string
+                id: String(msg.id),
                 name: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`,
                 message: msg.message.toLowerCase()
             }))
-            .filter(choice => choice.message.includes(focusedValue))  // Filter by the focused value
-            .slice(0, 25)  // Limit to 25 results
+            .filter(choice => choice.message.includes(focusedValue))
+            .slice(0, 25)
             .map(choice => ({ name: choice.name, value: choice.id }));
 
-        // Ensure single response
-        if (!responded) {
-            await interaction.respond(filteredChoices);
-            responded = true;
-            console.log("✅ Autocomplete response sent.");
-        }
+        // Ensure response is sent only once
+        await interaction.respond(filteredChoices);
+        console.log("✅ Autocomplete response sent.");
     } catch (error) {
         console.error("❌ Autocomplete failed:", error);
-        if (!responded) {
-            await interaction.respond([]);  // Send empty choices if error
-            responded = true;
+
+        // Try sending an empty response only if the interaction is still valid
+        if (!interaction.replied && !interaction.deferred) {
+            try {
+                await interaction.respond([]);
+            } catch (err) {
+                console.error("⚠️ Failed to send fallback response:", err);
+            }
         }
     }
 }
