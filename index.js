@@ -151,8 +151,6 @@ async function handleschedulerManagerCommand(interaction) {
 }
 
 let lastScheduledMsgAutocompleteTime = 0;
-let lastCacheUpdateTime = 0;
-let cachedScheduledMessages = [];
 
 async function handleScheduledMsgAutocomplete(interaction) {
     const focusedValue = interaction.options.getFocused().toLowerCase();
@@ -165,22 +163,18 @@ async function handleScheduledMsgAutocomplete(interaction) {
     let responded = false;
 
     try {
-        // Refresh cache every 60 seconds
-        if (!cachedScheduledMessages.length || now - lastCacheUpdateTime > 60000) {
-            console.log("🔄 Updating cache for scheduled messages...");
-            cachedScheduledMessages = schedulerManager.getScheduledMessages().map((msg) => ({
-                id: msg.id,  // Ensure ID is a string
-                name: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`,
-                lowerName: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`.toLowerCase(),
-                message: msg.message.toLowerCase()
-            }));
-            lastCacheUpdateTime = now;  // Update cache time
-        }
+        // Get fresh scheduled messages every time
+        const scheduledMessages = schedulerManager.getScheduledMessages();
 
         // Filter choices
-        const filteredChoices = cachedScheduledMessages
-            .filter(choice => choice.message.includes(focusedValue))
-            .slice(0, 25)
+        const filteredChoices = scheduledMessages
+            .map((msg) => ({
+                id: String(msg.id),  // Ensure ID is a string
+                name: `${msg.message.slice(0, 20)} in #${msg.channelName} (${msg.cronTime})`,
+                message: msg.message.toLowerCase()
+            }))
+            .filter(choice => choice.message.includes(focusedValue))  // Filter by the focused value
+            .slice(0, 25)  // Limit to 25 results
             .map(choice => ({ name: choice.name, value: choice.id }));
 
         // Ensure single response
